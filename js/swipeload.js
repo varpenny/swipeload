@@ -166,40 +166,30 @@ var SwipeLoad = (function(window, document) {
         },
 
         /**
-         * 执行加载（若在 url 中指定 callback，则请求响应后不删除对应的回调函数）
+         * 执行数据加载
          * @param  {string}   url          资源url
          * @param  {function} fn           回调函数
-         * @param  {string}   fnName 回调函数名
+         * @param  {string}   fnName    回调函数名
          * @param  {string}   charset      资源编码
          */
         __doLoad: function(url, fn, fnName, charset) {
-            // 判断 url 本身是否已经带有 callback 参数
-            // 优先考虑 url 中带有的 callback 参数值为 fnName
-            var cbName = lib.getParam(url, 'callback');
-            var fnName = cbName || fnName;
-            var cb = cbName || !fnName ? '' : 'callback=' + fnName;
-
-            // 确保添加的 callback 参数不受其他参数影响（避免 url 本身包含 '#' 锚点时接口无法正确识别 callback 参数）
-            var pos = url.indexOf('?') + 1;
-            if (cb) url = 0 == pos ? (url + '?' + cb) : (url.substring(pos, -1) + cb + '&' + url.substring(pos));
+            var cb = fnName ? '' : 'callback=' + fnName;
+            var sp = -1 == url.indexOf('?') ? '?' : '&';
+            var url = url + sp + cb;
 
             if ('function' == typeof fn && fnName) window[fnName] = fn;
-
-            var headElm = document.head;
+            var headElm = document.getElementsByTagName('head')[0];
             var scriptElm = document.createElement('script');
-            if(charset) scriptElm.charset = charset;
+            if (charset) scriptElm.charset = charset;
             scriptElm.src = url;
             headElm.appendChild(scriptElm);
 
             scriptElm.onload = scriptElm.onreadystatechange = function() {
                 var f = scriptElm.readyState;
                 if (f && f != 'loaded' && f != 'complete') return;
-
                 scriptElm.onload = scriptElm.onreadystatechange = null;
                 headElm.removeChild(scriptElm);
-
-                // 如果没有在 url 中指定 callback，则删除对应的回调函数，否则不删除
-                if (!cbName && window[fnName]) delete window[fnName];
+                if (window[fnName]) delete window[fnName];
             };
         },
 
