@@ -1,6 +1,6 @@
 /**
  * @author penny
- * @description 最多用3个结点完成滑动切换，支持数据动态请求
+ * @description 支持动态加载数据的滑动切换插件
  */
 var SwipeLoad = (function(window, document) {
     var dummyStyle = document.createElement('div').style,
@@ -74,13 +74,14 @@ var SwipeLoad = (function(window, document) {
             preloadEdge: 3, // 数据预加载时距离已加载数据边缘个数
             verticle: false, // 是否纵向滑动
             disableScroll: false, // 是否禁用默认滚动
-            setNode: function(data) {},
-            setData: function(data) {},
-            callback: function() {},
-            slideOn: function() {},
-            slideEnd: function() {}
+            setNode: function(data) {}, // 设置数据节点
+            setData: function(data) {}, // 设置数据变量
+            callback: function() {}, // 数据初始化后或滑动触发后执行
+            slideOn: function() {}, // 滑动进行中执行
+            slideEnd: function() {}, // 滑动结束时执行
+            pastStart: function() {}, // 滑动超过第一张时执行
+            pastEnd: function() {} // 滑动超过第最后一张时执行
         },
-
         usrTouch = {
             isInitiate: false, // 手势起始标志
             isMove: false, // 手势滑动标志
@@ -92,13 +93,11 @@ var SwipeLoad = (function(window, document) {
             isLockDirect: false, // 不锁定方向判断
             isFinished: true // 手势触发的动画的结束标志
         },
-
         state = {
             isInit: true, // 初始化数据标志
             curIndex: 0, // 针对数据数组的当前索引
-            preloadArr: [] // 预加载标识数组（队列）
+            preloadObj: {} // 预加载数据对象
         },
-        
         SwipeLoad = function(elm, config) {
             this.wrap = typeof elm == 'string' ? document.getElementById(elm) : elm; // wrap 层结点对象
             if (!this.wrap) return;
@@ -115,6 +114,7 @@ var SwipeLoad = (function(window, document) {
             this.dataArr = options.dataArr || []; // 数据数组
             this.dataTotal = this.dataArr.length; // 数据总数
             this.dataNewArr = []; // 新增数据数组
+            this.dataPageNo = 0; // 数据分页页码
             this.direction = null; // 滑动方向
             this.unit = null; // 单个滑动距离
             this.resize(); // 重置 unit 值
@@ -134,35 +134,24 @@ var SwipeLoad = (function(window, document) {
             // this.wrap.addEventListener(transitionEndEvent, this, false);
         },
 
-        // 初始化数据
-        __initData: function(startIndex) {
+        /**
+         * 初始化数据
+         * @param  {number} startIndex 起始数据索引
+         * @param {boolean} goFlag 跳到指定数据索引处的标志
+         */
+        __initData: function(startIndex, goFlag) {
             state.isInit = true;
-            this.curIndex = startIndex;
             this.direction = null;
             if (!options.dataUrl) {
                 // 静态数据
-                state.curIndex = this.curIndex;
+                this.curIndex = startIndex;
+                state.curIndex = startIndex;
                 this.__selectData();
             } else {
                 // 动态数据
-                state.curIndex = this.curIndex % options.pageSize;
-                this.__loadData(this.curIndex);
+                !goFlag && (this.curIndex = startIndex); // 非指定位置的情况（goTo）
+                this.__loadData(startIndex, goFlag);
             }
-        },
-
-        /**
-         * 根据 URL 参数名获取参数值
-         * @param  {string} url   指定的 URL
-         * @param  {string} name URL参数名
-         * @return {string}      返回获取到的参数值
-         */
-        __getParam: function(url, name) {
-            if (!name) return;
-
-            var key = name.replace(/[\[]/, '\\\[').replace(/[\]]/, '\\\]');
-            var regExp = new RegExp('[\\?&#]' + key + '=([^&#]*)');
-            var results = regExp.exec(url);
-            return null == results ? undefined : results[1];
         },
 
         /**
@@ -173,7 +162,7 @@ var SwipeLoad = (function(window, document) {
          * @param  {string}   charset      资源编码
          */
         __doLoad: function(url, fn, fnName, charset) {
-            var cb = fnName ? '' : 'callback=' + fnName;
+            var cb = !fnName ? '' : 'callback=' + fnName;
             var sp = -1 == url.indexOf('?') ? '?' : '&';
             var url = url + sp + cb;
 
@@ -195,61 +184,65 @@ var SwipeLoad = (function(window, document) {
 
         /**
          * 加载数据
-         * @param  {number} curIndex 数据索引
-         * @param {boolean} goFlag 跳到第几张位置标志
+         * @param  {number} dataIndex 数据索引
+         * @param {number} goFlag 快速指定数据位置的标志
          */
-        __loadData: function(curIndex, goFlag) {
+        __loadData: function(dataIndex, goFlag) {
             if (!options.dataUrl) return;
 
             var pageSize = options.pageSize;
-            var pageNo = Math.ceil((curIndex + 1) / pageSize); // 数据分页页码
+            var pageNo = Math.ceil((dataIndex + 1) / pageSize); // 加载的数据分页页码
             var curPageNo = Math.ceil((this.curIndex + 1) / pageSize); // 当前数据分页页码
-
-            if (true === goFlag) {
-                this.curIndex = curIndex;
-                state.curIndex = this.curIndex % options.pageSize;
-
+            if (goFlag) {
                 if (pageNo === curPageNo) {
-                    // 当前分页
-                    if (this.__preloadData(true)) return;
-
+                    // 当前分页，直接显示数据
+                    state.curIndex += dataIndex - this.curIndex; // 更新针对数据数组的当前索引
+                    this.curIndex = dataIndex; // 更新针对全部数据的当前索引
                     this.__selectData();
+                    return;
                 }
+                this.curIndex = dataIndex; // 更新针对全部数据的当前索引
             }
 
             var url = options.dataUrl.replace('{pageSize}', pageSize).replace('{pageNo}', pageNo);
-            var callbackName = 'showSwipeData' + pageNo;
+            var fnName = 'showSwipeData' + pageNo;
             var charset = options.chartset;
             var _this = this;
-
             this.__doLoad(url, function(data) {
                 // set dataNewArr, dataTotal etc.
                 options.setData.call(_this, data);
 
-                var preloadItem = state.preloadArr.pop();
-                if (preloadItem && 0 < preloadItem.direction) {
-                    // 预加载下一页数据
+                var showFlag = false; // 加载到数据后是否直接显示
+                var pageNo = _this.dataPageNo; // 加载到的数据分页页码
+                var curPageNo = Math.ceil((_this.curIndex + 1) / pageSize); // 当前数据分页页码
+                if (pageNo) {
+                    showFlag = state.preloadObj[pageNo];
+                    delete state.preloadObj[pageNo];
+                }
+                if (_this.dataPageNo > curPageNo) {
+                    // 预加载到的是下一页数据
                     _this.dataArr = _this.dataArr.concat(_this.dataNewArr);
-                    if (preloadItem.showFlag) _this.__selectData();
-                } else if (preloadItem && 0 > preloadItem.direction) {
-                    // 预加载上一页数据
+                    showFlag && _this.__selectData();
+
+                } else if (_this.dataPageNo < curPageNo) {
+                    // 预加载到的是上一页数据
                     _this.dataArr = _this.dataNewArr.concat(_this.dataArr);
-                    state.curIndex += _this.dataNewArr.length;
-                    if (preloadItem.showFlag) _this.__selectData();
+                    state.curIndex += _this.dataNewArr.length; // 更新针对数据数组的当前索引
+                    showFlag && _this.__selectData();
+
                 } else {
+                    // if (!showFlag) return;
                     // 初始加载数据
                     _this.dataArr = _this.dataNewArr;
-                    if (_this.__preloadData(true)) return;
-
+                    state.curIndex = _this.curIndex % options.pageSize;
                     _this.__selectData();
                 }
-            }, callbackName, charset);
+            }, fnName, charset);
         },
 
         /**
          * 预加载数据
          * @param  {boolean} showFlag 加载后是否直接显示数据
-         * @return {boolean} 是否满足预加载条件
          */
         __preloadData: function(showFlag) {
             if (!options.dataUrl) return;
@@ -260,27 +253,23 @@ var SwipeLoad = (function(window, document) {
             // 向后预加载数据
             var arrIndex = state.curIndex + this.preloadEdge;
             var dataIndex = this.curIndex + this.preloadEdge;
+            var curPageNo = Math.ceil((this.curIndex + 1) / options.pageSize); // 当前数据分页页码
+            var pageNo = curPageNo + 1;
             if (this.dataArr.length <= arrIndex && this.dataTotal > dataIndex) {
-                state.preloadArr.unshift({
-                    direction: 1,
-                    showFlag: showFlag
-                });
+                state.preloadObj[pageNo] = showFlag; // 临时保存预加载的数据信息
                 this.__loadData(dataIndex);
-                return true;
+                return;
             }
 
             // 向前预加载数据
             var arrIndex = state.curIndex - this.preloadEdge;
             var dataIndex = this.curIndex - this.preloadEdge;
+            var pageNo = curPageNo - 1;
             if (0 > arrIndex && 0 <= dataIndex) {
-                state.preloadArr.unshift({
-                    direction: -1,
-                    showFlag: showFlag
-                });
+                state.preloadObj[pageNo] = showFlag; // 临时保存预加载的数据信息
                 this.__loadData(dataIndex);
-                return true;
+                return;
             }
-            return false;
         },
 
         // 选择显示数据
@@ -486,7 +475,6 @@ var SwipeLoad = (function(window, document) {
                 state.curIndex += 1;
                 this.__pos(-this.unit, true);
             }
-
         },
 
         // 获取当前数据信息
@@ -499,17 +487,7 @@ var SwipeLoad = (function(window, document) {
         goTo: function(curIndex) {
             if (0 > curIndex || this.dataTotal <= curIndex) return;
 
-            this.__initData(curIndex);
-        },
-
-        // 滑动超过第一张时执行
-        pastStart: function() {
-            'function' == typeof options.pastStart && options.pastStart.call(this);
-        },
-
-        // 滑动超过第最后一张时执行
-        pastEnd: function() {
-            'function' == typeof options.pastEnd && options.pastEnd.call(this);
+            this.__initData(curIndex, true);
         },
 
         // 数据初始化后或滑动触发后执行
@@ -525,6 +503,16 @@ var SwipeLoad = (function(window, document) {
         // 滑动结束时执行
         slideEnd: function() {
             'function' == typeof options.slideEnd && options.slideEnd.call(this);
+        },
+
+        // 滑动超过第一张时执行
+        pastStart: function() {
+            'function' == typeof options.pastStart && options.pastStart.call(this);
+        },
+
+        // 滑动超过第最后一张时执行
+        pastEnd: function() {
+            'function' == typeof options.pastEnd && options.pastEnd.call(this);
         },
 
         // 容器尺寸变化时执行
@@ -571,4 +559,5 @@ var SwipeLoad = (function(window, document) {
     };
 
     return SwipeLoad;
+
 })(window, document);
