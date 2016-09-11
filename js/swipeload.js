@@ -484,10 +484,10 @@ var SwipeLoad = (function(window, document) {
         },
 
         // 跳到指定数据索引处
-        goTo: function(curIndex) {
-            if (0 > curIndex || this.dataTotal <= curIndex) return;
+        goTo: function(goIndex) {
+            if (0 > goIndex || this.dataTotal <= goIndex) return;
 
-            this.__initData(curIndex, true);
+            this.__initData(goIndex, true);
         },
 
         // 数据初始化后或滑动触发后执行
