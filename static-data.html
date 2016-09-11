@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>静态数据＋滑动切换＋图片缩放</title>
+<meta name="description" content="" />
+<meta name="keywords" content="" />
+<meta name="author" content="penny" />
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="g-doc">
+    <p class="m-top">静态数据 <span id="JcurNum"></span>/<span id="JtotalNum"></span></p>
+    <div class="m-swipe">
+        <p class="m-swipe-tips" id="JtipsFirst" style="display:none;">已经是第一张</p>
+        <p class="m-swipe-tips" id="JtipsLast" style="display:none;">已经是最后一张</p>
+        <ul class="m-swipe-list" id="JsliderList"></ul>
+    </div>
+    <dl class="m-dl">
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+        <dt>小标题</dt>
+        <dd>其他内容，其他内容，其他内容......</dd>
+    </dl>
+</div>
+<p class="m-toast-tips" id="JtoastTips">点击图片或横屏<br />可进入全屏模式</p>
+<script>
+// 页面数据配置
+var PAGE_CONFIG = {
+    dataArr: [{
+        "des": "文字内容1",
+        "pic": "https://placeholdit.imgix.net/~text?w=800&h=600&txtsize=150&txt=Pic1"
+    }, {
+        "des": "文字内容2",
+        "pic": "https://placeholdit.imgix.net/~text?w=800&h=600&txtsize=150&txt=Pic2"
+    }, {
+        "des": "文字内容3",
+        "pic": "https://placeholdit.imgix.net/~text?w=800&h=600&txtsize=150&txt=Pic3"
+    }, {
+        "des": "文字内容4",
+        "pic": "https://placeholdit.imgix.net/~text?w=800&h=600&txtsize=150&txt=Pic4"
+    }, {
+        "des": "文字内容5",
+        "pic": "https://placeholdit.imgix.net/~text?w=800&h=600&txtsize=150&txt=Pic5"
+    }],
+    prevUrl: '', // 滑过当前数据接口第一条数据的跳转链接，如果没有则留空
+    nextUrl: 'dynamic-data.html' // 滑过当前数据接口最后一条数据的跳转链接，如果没有则留空
+};
+</script>
+<script type="text/template" id="Jtemplate">
+<li class="m-img">
+    <img src="{{picUrl}}" alt="" />
+    <p>{{picDes}}</p>
+</li>
+</script>
+<script src="js/swipeload.js" charset="utf-8"></script>
+<script src="js/main.js" charset="utf-8"></script>
+</body>
+</html>
