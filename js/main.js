@@ -249,8 +249,8 @@
         var totalNumElm = lib.el('JtotalNum'); // 显示图片总页数
         var totalNum = null; // 数据总数
         var sto = null; // 跳转延时，为了让跳转之前图片被滑动之后恢复原位，以免浏览器恢复缓存页面时图片处于滑动过的状态
-        var tmplObj = lib.el('Jtemplate');
-        var PIC_TMPL = tmplObj && tmplObj.innerHTML || ''; // HTML 模板
+        var tmplElm = lib.el('Jtmpl');
+        var PIC_TMPL = tmplElm && tmplElm.innerHTML || ''; // HTML 模板
 
         var swipeLoadObj = new SwipeLoad('JsliderList', {
             startIndex: 0 > startIndex ? dataArr.length - 1 : startIndex, // 起始数据索引
