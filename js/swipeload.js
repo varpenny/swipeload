@@ -204,7 +204,7 @@ var SwipeLoad = (function(window, document) {
                 this.curIndex = dataIndex; // 更新针对全部数据的当前索引
             }
 
-            var url = options.dataUrl.replace('{pageSize}', pageSize).replace('{pageNo}', pageNo);
+            var url = options.dataUrl.replace('{{pageSize}}', pageSize).replace('{{pageNo}}', pageNo);
             var fnName = 'showSwipeData' + pageNo;
             var charset = options.chartset;
             var _this = this;
