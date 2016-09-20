@@ -1,6 +1,7 @@
 /**
  * @author penny
  * @description 支持动态加载数据的滑动切换插件
+ * @todo 循环滑动
  */
 var SwipeLoad = (function(window, document) {
     var dummyStyle = document.createElement('div').style,
