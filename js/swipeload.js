@@ -167,7 +167,7 @@ var SwipeLoad = (function(window, document) {
             var url = url + sp + cb;
 
             if ('function' == typeof fn && fnName) window[fnName] = fn;
-            var headElm = document.getElementsByTagName('head')[0];
+            var headElm = document.head || document.getElementsByTagName('head')[0];
             var scriptElm = document.createElement('script');
             if (charset) scriptElm.charset = charset;
             scriptElm.src = url;

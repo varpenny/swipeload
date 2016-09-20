@@ -23,7 +23,7 @@
 }
 ```
 (3) JavaScript
-``` JavaScript
+``` javascript
 var swipeLoadObj = new SwipeLoad('JsliderList', {
     dataArr: [], // 支持静态数据，但优先动态数据接口
     dataUrl: 'xxx?pageNo={{pageNo}}&pageSize={{pageSize}}', // 动态数据接口，{{xxx}} 形式用于插件请求接口时替换实际分页数据
