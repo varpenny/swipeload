@@ -3,7 +3,8 @@
  * @description 支持动态加载数据的滑动切换插件
  * @todo 循环滑动
  */
-var SwipeLoad = (function(window, document) {
+var SwipeLoad = (function(win, doc) {
+
     var dummyStyle = document.createElement('div').style,
         vendor = (function() {
             var vendors = 't,webkitT,MozT,msT,OT'.split(','),
@@ -99,7 +100,11 @@ var SwipeLoad = (function(window, document) {
             curIndex: 0, // 针对数据数组的当前索引
             preloadObj: {} // 预加载数据对象
         },
+
         SwipeLoad = function(elm, config) {
+            // 确保以 new 形式创建对象
+            if (this === win) return new SwipeLoad(elm, config);
+
             this.wrap = typeof elm == 'string' ? document.getElementById(elm) : elm; // wrap 层结点对象
             if (!this.wrap) return;
 
